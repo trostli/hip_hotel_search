@@ -4,8 +4,11 @@ class HotelScraperApi
 
   PROVIDERS = %w(Expedia Orbitz Priceline Travelocity Hilton)
 
+  attr_reader :errors
+
   def initialize
     @base_url = ENV['HOTEL_SCRAPER_URL']
+    @errors
   end
 
 
@@ -20,7 +23,12 @@ class HotelScraperApi
     hydra.run
 
     responses = requests.map { |request|
-      JSON.parse(request.response.body)["results"]
+      if request.response.code == 200
+        JSON.parse(request.response.body)["results"]
+      else
+        @errors << JSON.parse(request.response.body)
+        nil
+      end
     }
 
     responses.flatten.sort_by { |result| result["ecstasy"] }.reverse
